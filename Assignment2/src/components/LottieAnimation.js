@@ -1,28 +1,22 @@
 import React from 'react';
 import Lottie from 'react-lottie';
-import animationData from '../animations/cutedoggie.json';
 
-const LottieAnimation = (props) => {
+const LottieAnimation = ({animationData, width = 300, height = 300}) => {
     const defaultOptions = {
         loop : true,
         autoplay : true,
         animationData : animationData,
         rendererSettings: {
-            preserveAspectRation : "xMidYMid slice"
+            preserveAspectRatio : "xMidYMid slice"
         }
     };
     
-
-
-return (
-    <div>
-        <h3>Lottie</h3>
-        <br></br>
-        <Lottie options={defaultOptions} height = {300} width = {300}
-        />
-    </div>
-)
-
+    return (
+        <div>
+            <br></br>
+            <Lottie options={defaultOptions} height = {height} width = {width}/>
+        </div>
+    );
 };
 
 export default LottieAnimation;
