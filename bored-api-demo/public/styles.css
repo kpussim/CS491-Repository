@@ -1,0 +1,49 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #f4f6f8;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+  .container {
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+  }
+  .filter-form {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+  }
+  select, button, .btn-random {
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+  }
+  button, .btn-random {
+    background: #0070f3;
+    color: white;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  }
+  .meta {
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-around;
+    color: #666;
+  }
+  .error {
+    color: #d32f2f;
+  }
