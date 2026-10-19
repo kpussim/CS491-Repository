@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Productivity Dashboard</title>
+  <style>
+    /* ---------- Base / Reset ---------- */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-1: #6a11cb;
+      --bg-2: #2575fc;
+      --card-bg: rgba(255, 255, 255, 0.92);
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent: #2575fc;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+      --radius: 18px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 100%);
+      padding: 24px;
+      line-height: 1.5;
+    }
+
+    /* ---------- Header ---------- */
+    header {
+      text-align: center;
+      color: #fff;
+      margin-bottom: 28px;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    header .date {
+      margin-top: 6px;
+      font-size: 1rem;
+      opacity: 0.9;
+    }
+
+    /* ---------- Layout ---------- */
+    .grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      backdrop-filter: blur(8px);
+    }
+    .card.full { grid-column: 1 / -1; }
+    .card h2 {
+      font-size: 1.25rem;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ---------- Quote Card ---------- */
+    .quote-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: linear-gradient(160deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85));
+    }
+    .quote-text {
+      font-size: 1.35rem;
+      font-style: italic;
+      line-height: 1.6;
+      color: #374151;
+    }
+    .quote-author {
+      margin-top: 16px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .quote-actions { margin-top: 20px; }
+
+    /* ---------- Buttons ---------- */
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: transform 0.08s ease, opacity 0.2s ease, background 0.2s ease;
+      color: #fff;
+      background: var(--accent);
+    }
+    button:hover { transform: translateY(-1px); opacity: 0.92; }
+    button:active { transform: translateY(0); }
+    button.ghost {
+      background: transparent;
+      color: var(--accent);
+      border: 2px solid var(--accent);
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    button.small { padding: 6px 10px; font-size: 0.85rem; border-radius: 8px; }
+
+    /* ---------- Weather Card ---------- */
+    .weather-search {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .weather-search input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    .weather-search input:focus { border-color: var(--accent); }
+    .weather-display { text-align: center; min-height: 120px; }
+    .weather-emoji { font-size: 4rem; line-height: 1; }
+    .weather-temp { font-size: 2.4rem; font-weight: 700; }
+    .weather-desc { color: var(--muted); font-size: 1.05rem; text-transform: capitalize; }
+    .weather-loc { font-weight: 600; margin-bottom: 4px; }
+    .weather-meta {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      margin-top: 12px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .status-msg { color: var(--muted); font-size: 0.95rem; padding: 24px 0; }
+    .error-msg { color: #dc2626; font-size: 0.95rem; padding: 12px 0; }
+
+    /* ---------- Task Tracker ---------- */
+    .task-add {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .task-add input {
+      flex: 1;
+      padding: 11px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    .task-add input:focus { border-color: var(--accent); }
+
+    .task-summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .task-summary strong { color: var(--text); }
+
+    .task-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+    .task-item {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 12px 14px;
+      border-left: 5px solid var(--task-color, var(--accent));
+    }
+    .task-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .task-name { flex: 1; font-weight: 600; }
+    .task-name.done { text-decoration: line-through; color: var(--muted); }
+    .task-controls { display: flex; align-items: center; gap: 6px; }
+    .task-controls button {
+      width: 30px; height: 30px; padding: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 1rem; line-height: 1;
+      background: var(--accent);
+    }
+    .task-controls button.del { background: #ef4444; }
+    .task-percent { font-size: 0.85rem; font-weight: 700; min-width: 40px; text-align: right; }
+
+    /* Colorful progress bar */
+    .progress-track {
+      margin-top: 10px;
+      height: 12px;
+      width: 100%;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.3s ease, background 0.3s ease;
+      width: 0%;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--muted);
+      padding: 24px 0;
+      font-style: italic;
+    }
+
+    /* ---------- Pomodoro Card ---------- */
+    .pomo-card { display: flex; flex-direction: column; text-align: center; }
+    .pomo-body {
+      flex: 1; display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+    }
+    .pomo-mode {
+      font-size: 0.8rem; font-weight: 700;
+      padding: 4px 14px; border-radius: 999px;
+      background: #f3f4f6; color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .pomo-card.pomo-work .pomo-mode { background: #fee2e2; color: #b91c1c; }
+    .pomo-card.pomo-break .pomo-mode { background: #d1fae5; color: #047857; }
+    .pomo-time {
+      font-size: 3.4rem; font-weight: 800;
+      font-variant-numeric: tabular-nums; letter-spacing: 1px;
+      margin: 4px 0;
+    }
+    .pomo-card.pomo-work .pomo-time { color: #ef4444; }
+    .pomo-card.pomo-break .pomo-time { color: #10b981; }
+    .pomo-controls { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+    .pomo-meta { margin-top: 14px; font-size: 0.85rem; color: var(--muted); }
+
+    /* ---------- Cat Fact Card ---------- */
+    .cat-card { display: flex; flex-direction: column; justify-content: space-between; }
+    .cat-fact {
+      font-size: 1.1rem; line-height: 1.6; color: #374151;
+      margin: 6px 0 16px; min-height: 64px;
+    }
+    .cat-card.glow { animation: glow 1s ease; }
+    @keyframes glow {
+      0%   { box-shadow: 0 0 0 0 rgba(251,191,36,0.6), var(--shadow); }
+      100% { box-shadow: 0 0 0 16px rgba(251,191,36,0), var(--shadow); }
+    }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 760px) {
+      .grid { grid-template-columns: 1fr; }
+      .quote-card { grid-row: auto; }
+      header h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>⚡ My Productivity Dashboard</h1>
+    <div class="date" id="todayDate"></div>
+  </header>
+
+  <main class="grid">
+    <!-- Daily Motivation Quote -->
+    <section class="card quote-card" aria-label="Daily motivation quote">
+      <h2>💭 Daily Motivation</h2>
+      <div>
+        <p class="quote-text" id="quoteText">Loading your dose of inspiration...</p>
+        <p class="quote-author" id="quoteAuthor"></p>
+      </div>
+      <div class="quote-actions">
+        <button id="newQuoteBtn" type="button">New Quote</button>
+      </div>
+    </section>
+
+    <!-- Weather -->
+    <section class="card" aria-label="Current weather">
+      <h2>🌤️ Weather</h2>
+      <div class="weather-search">
+        <input id="cityInput" type="text" placeholder="Enter city name..." aria-label="City name" />
+        <button id="searchBtn" type="button">Search</button>
+        <button id="geoBtn" type="button" class="ghost" title="Use my location">📍</button>
+      </div>
+      <div class="weather-display" id="weatherDisplay">
+        <p class="status-msg">Search a city or tap 📍 to use your location.</p>
+      </div>
+    </section>
+
+    <!-- Pomodoro Timer -->
+    <section class="card pomo-card" id="pomoCard" aria-label="Pomodoro timer">
+      <h2>🍅 Pomodoro Timer</h2>
+      <div class="pomo-body">
+        <div class="pomo-mode" id="pomoMode">Focus</div>
+        <div class="pomo-time" id="pomoTime">25:00</div>
+        <div class="pomo-controls">
+          <button id="pomoStart" type="button">Start</button>
+          <button id="pomoReset" type="button" class="ghost">Reset</button>
+        </div>
+        <div class="pomo-meta">Completed focus sessions: <strong id="pomoCycles">0</strong></div>
+      </div>
+    </section>
+
+    <!-- Cat Fact -->
+    <section class="card cat-card" id="catFactCard" aria-label="Random cat fact">
+      <h2>🐾 Fun Cat Fact</h2>
+      <p class="cat-fact" id="catFact">Loading a cat fact... 🐱</p>
+      <div>
+        <button id="newCatFactBtn" type="button">New Cat Fact</button>
+      </div>
+    </section>
+
+    <!-- Task Tracker -->
+    <section class="card full" aria-label="Task tracker">
+      <h2>✅ Task Tracker</h2>
+      <form class="task-add" id="taskForm">
+        <input id="taskInput" type="text" placeholder="Add a new task..." aria-label="New task" required />
+        <button type="submit">Add</button>
+      </form>
+      <div class="task-summary">
+        <span><strong id="totalCount">0</strong> tasks · <strong id="doneCount">0</strong> completed</span>
+        <button type="button" class="ghost small" id="clearDoneBtn">Clear completed</button>
+      </div>
+      <ul class="task-list" id="taskList"></ul>
+      <p class="empty-state" id="emptyState">No tasks yet. Add one above to get started! 🚀</p>
+    </section>
+  </main>
+
+  <script>
+    /* =========================================================
+       1. Today's Date
+    ========================================================= */
+    (function setDate() {
+      const now = new Date();
+      document.getElementById('todayDate').textContent =
+        now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    })();
+
+    /* =========================================================
+       2. Motivational Quotes
+       Daily quote auto-selected by day-of-year; "New Quote" picks
+       a random one. All built-in, so it works offline.
+    ========================================================= */
+    const QUOTES = [
+      { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+      { text: "Success is the sum of small efforts repeated day in and day out.", author: "Robert Collier" },
+      { text: "You don't have to be great to start, but you have to start to be great.", author: "Zig Ziglar" },
+      { text: "Productivity is never an accident. It is always the result of a commitment to excellence.", author: "Paul J. Meyer" },
+      { text: "Focus on being productive instead of busy.", author: "Tim Ferriss" },
+      { text: "The way to get started is to quit talking and begin doing.", author: "Walt Disney" },
+      { text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
+      { text: "It always seems impossible until it's done.", author: "Nelson Mandela" },
+      { text: "Whether you think you can or you think you can't, you're right.", author: "Henry Ford" },
+      { text: "The future depends on what you do today.", author: "Mahatma Gandhi" },
+      { text: "Do something today that your future self will thank you for.", author: "Sean Patrick Flanery" },
+      { text: "Small daily improvements lead to stunning results.", author: "Robin Sharma" },
+      { text: "Discipline is the bridge between goals and accomplishment.", author: "Jim Rohn" },
+      { text: "Action is the foundational key to all success.", author: "Pablo Picasso" },
+      { text: "Quality is not an act, it is a habit.", author: "Aristotle" },
+      { text: "Well done is better than well said.", author: "Benjamin Franklin" },
+      { text: "Your limitation—it's only your imagination.", author: "Unknown" },
+      { text: "Great things never come from comfort zones.", author: "Unknown" },
+      { text: "Dream it. Wish it. Do it.", author: "Unknown" },
+      { text: "Push yourself, because no one else is going to do it for you.", author: "Unknown" }
+    ];
+
+    const quoteTextEl = document.getElementById('quoteText');
+    const quoteAuthorEl = document.getElementById('quoteAuthor');
+
+    function renderQuote(index) {
+      const q = QUOTES[index % QUOTES.length];
+      quoteTextEl.textContent = `"${q.text}"`;
+      quoteAuthorEl.textContent = `— ${q.author}`;
+    }
+    // Pick a deterministic quote for today (same quote all day)
+    function todayQuoteIndex() {
+      const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+      return dayOfYear % QUOTES.length;
+    }
+    renderQuote(todayQuoteIndex());
+
+    document.getElementById('newQuoteBtn').addEventListener('click', () => {
+      let i = todayQuoteIndex();
+      // ensure it's actually different from the daily one when possible
+      let next = Math.floor(Math.random() * QUOTES.length);
+      if (QUOTES.length > 1) { while (next === i) next = Math.floor(Math.random() * QUOTES.length); }
+      renderQuote(next);
+    });
+
+    /* =========================================================
+       3. Weather (Open-Meteo — free, no API key required)
+       Geocoding:  https://geocoding-api.open-meteo.com/v1/search?name=...
+       Forecast:   https://api.open-meteo.com/v1/forecast?latitude=..&longitude=..&current=...
+    ========================================================= */
+    const weatherDisplay = document.getElementById('weatherDisplay');
+    const cityInput = document.getElementById('cityInput');
+
+    // WMO weather code -> description + emoji
+    const WMO = {
+      0:  ["Clear sky", "☀️"],
+      1:  ["Mainly clear", "🌤️"],
+      2:  ["Partly cloudy", "⛅"],
+      3:  ["Overcast", "☁️"],
+      45: ["Fog", "🌫️"],
+      48: ["Rime fog", "🌫️"],
+      51: ["Light drizzle", "🌦️"],
+      53: ["Drizzle", "🌦️"],
+      55: ["Dense drizzle", "🌧️"],
+      56: ["Freezing drizzle", "🌧️"],
+      57: ["Freezing drizzle", "🌧️"],
+      61: ["Slight rain", "🌧️"],
+      63: ["Rain", "🌧️"],
+      65: ["Heavy rain", "🌧️"],
+      66: ["Freezing rain", "🌧️"],
+      67: ["Freezing rain", "🌧️"],
+      71: ["Slight snow", "🌨️"],
+      73: ["Snow", "🌨️"],
+      75: ["Heavy snow", "❄️"],
+      77: ["Snow grains", "🌨️"],
+      80: ["Rain showers", "🌦️"],
+      81: ["Rain showers", "🌦️"],
+      82: ["Violent rain showers", "⛈️"],
+      85: ["Snow showers", "🌨️"],
+      86: ["Snow showers", "🌨️"],
+      95: ["Thunderstorm", "⛈️"],
+      96: ["Thunderstorm with hail", "⛈️"],
+      99: ["Thunderstorm with hail", "⛈️"]
+    };
+
+    function showWeatherLoading(msg = "Fetching weather...") {
+      weatherDisplay.innerHTML = `<p class="status-msg">${msg}</p>`;
+    }
+    function showWeatherError(msg) {
+      weatherDisplay.innerHTML = `<p class="error-msg">⚠️ ${msg}</p>`;
+    }
+
+    function renderWeather(data, placeName) {
+      const c = data.current;
+      const [desc, emoji] = WMO[c.weather_code] || ["Unknown", "🌡️"];
+      weatherDisplay.innerHTML = `
+        <div class="weather-loc">${placeName}</div>
+        <div class="weather-emoji">${emoji}</div>
+        <div class="weather-temp">${Math.round(c.temperature_2m)}°C</div>
+        <div class="weather-desc">${desc}</div>
+        <div class="weather-meta">
+          <span>Feels like ${Math.round(c.apparent_temperature)}°C</span>
+          <span>💧 ${c.relative_humidity_2m}%</span>
+          <span>💨 ${Math.round(c.wind_speed_10m)} km/h</span>
+        </div>
+      `;
+    }
+
+    async function fetchWeather(lat, lon, placeName) {
+      showWeatherLoading();
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+          `&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Weather request failed");
+        const data = await res.json();
+        renderWeather(data, placeName);
+      } catch (e) {
+        showWeatherError("Could not load weather. Check your connection.");
+      }
+    }
+
+    async function searchCity(name) {
+      if (!name.trim()) { showWeatherError("Please enter a city name."); return; }
+      showWeatherLoading("Searching location...");
+      try {
+        const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1`;
+        const res = await fetch(geoUrl);
+        if (!res.ok) throw new Error("Geocoding failed");
+        const data = await res.json();
+        if (!data.results || data.results.length === 0) {
+          showWeatherError(`No place found for "${name}".`);
+          return;
+        }
+        const r = data.results[0];
+        fetchWeather(r.latitude, r.longitude, `${r.name}${r.country ? ", " + r.country : ""}`);
+      } catch (e) {
+        showWeatherError("Could not search for that city.");
+      }
+    }
+
+    document.getElementById('searchBtn').addEventListener('click', () => searchCity(cityInput.value));
+    cityInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') searchCity(cityInput.value); });
+
+    document.getElementById('geoBtn').addEventListener('click', () => {
+      if (!navigator.geolocation) { showWeatherError("Geolocation not supported by your browser."); return; }
+      showWeatherLoading("Getting your location...");
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          // Reverse-ish: just label as "Your location"
+          fetchWeather(pos.coords.latitude, pos.coords.longitude, "Your location");
+        },
+        () => { showWeatherError("Location permission denied. Try searching a city instead."); },
+        { timeout: 10000 }
+      );
+    });
+
+    /* =========================================================
+       4. Task Tracker with colorful progress bars
+       Tasks persist in localStorage. Each task gets a color and
+       a completion percentage (0-100). The progress bar color
+       shifts from red -> orange -> green as it completes.
+    ========================================================= */
+    const STORAGE_KEY = "dashboard.tasks.v1";
+    // Palette for task accents (left border) — colorful per task
+    const PALETTE = ["#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
+
+    let tasks = loadTasks();
+
+    function loadTasks() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+      catch { return []; }
+    }
+    function saveTasks() { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }
+
+    // Colorful fill: hue goes from 0 (red) at 0% to 120 (green) at 100%
+    function progressColor(pct) {
+      const hue = (pct / 100) * 120;
+      return `linear-gradient(90deg, hsl(${hue}, 80%, 55%), hsl(${hue + 20}, 85%, 60%))`;
+    }
+
+    const taskListEl = document.getElementById('taskList');
+    const emptyStateEl = document.getElementById('emptyState');
+    const totalCountEl = document.getElementById('totalCount');
+    const doneCountEl = document.getElementById('doneCount');
+
+    function renderTasks() {
+      taskListEl.innerHTML = "";
+      tasks.forEach((t, i) => {
+        const li = document.createElement("li");
+        li.className = "task-item";
+        li.style.setProperty("--task-color", t.color);
+
+        const row = document.createElement("div");
+        row.className = "task-row";
+
+        const name = document.createElement("span");
+        name.className = "task-name" + (t.progress >= 100 ? " done" : "");
+        name.textContent = t.name;
+
+        const controls = document.createElement("div");
+        controls.className = "task-controls";
+
+        const minus = document.createElement("button");
+        minus.type = "button"; minus.textContent = "−"; minus.title = "Decrease";
+        minus.className = "small";
+        minus.addEventListener("click", () => changeProgress(i, -10));
+
+        const plus = document.createElement("button");
+        plus.type = "button"; plus.textContent = "+"; plus.title = "Increase";
+        plus.className = "small";
+        plus.addEventListener("click", () => changeProgress(i, 10));
+
+        const pct = document.createElement("span");
+        pct.className = "task-percent";
+        pct.textContent = t.progress + "%";
+
+        const del = document.createElement("button");
+        del.type = "button"; del.textContent = "✕"; del.title = "Delete";
+        del.className = "small del";
+        del.addEventListener("click", () => deleteTask(i));
+
+        controls.append(minus, plus, pct, del);
+        row.append(name, controls);
+
+        const track = document.createElement("div");
+        track.className = "progress-track";
+        const fill = document.createElement("div");
+        fill.className = "progress-fill";
+        fill.style.width = t.progress + "%";
+        fill.style.background = progressColor(t.progress);
+        track.appendChild(fill);
+
+        li.append(row, track);
+        taskListEl.appendChild(li);
+      });
+
+      // Summary + empty state
+      const done = tasks.filter(t => t.progress >= 100).length;
+      totalCountEl.textContent = tasks.length;
+      doneCountEl.textContent = done;
+      emptyStateEl.style.display = tasks.length === 0 ? "block" : "none";
+    }
+
+    function changeProgress(i, delta) {
+      tasks[i].progress = Math.max(0, Math.min(100, tasks[i].progress + delta));
+      saveTasks();
+      renderTasks();
+    }
+    function deleteTask(i) {
+      tasks.splice(i, 1);
+      saveTasks();
+      renderTasks();
+    }
+
+    document.getElementById('taskForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const input = document.getElementById('taskInput');
+      const name = input.value.trim();
+      if (!name) return;
+      tasks.push({
+        name,
+        progress: 0,
+        color: PALETTE[tasks.length % PALETTE.length]
+      });
+      saveTasks();
+      renderTasks();
+      input.value = "";
+      input.focus();
+    });
+
+    document.getElementById('clearDoneBtn').addEventListener('click', () => {
+      const before = tasks.length;
+      tasks = tasks.filter(t => t.progress < 100);
+      if (tasks.length !== before) { saveTasks(); renderTasks(); }
+    });
+
+    /* =========================================================
+       5. Pomodoro Timer with Desktop Notifications
+       25-min focus -> 5-min break, with a 15-min long break
+       every 4th focus session. Auto-advances phases, beeps,
+       and sends a desktop notification on each transition.
+    ========================================================= */
+    const WORK_MIN = 25, SHORT_BREAK_MIN = 5, LONG_BREAK_MIN = 15, LONG_EVERY = 4;
+    const pomo = {
+      mode: "work",            // "work" | "short" | "long"
+      secondsLeft: WORK_MIN * 60,
+      running: false,
+      timer: null,
+      completedWork: 0
+    };
+    const pomoCard = document.getElementById('pomoCard');
+    const pomoTimeEl = document.getElementById('pomoTime');
+    const pomoModeEl = document.getElementById('pomoMode');
+    const pomoCyclesEl = document.getElementById('pomoCycles');
+    const pomoStartBtn = document.getElementById('pomoStart');
+    const pomoResetBtn = document.getElementById('pomoReset');
+
+    function fmtTime(sec) {
+      const m = Math.floor(sec / 60).toString().padStart(2, "0");
+      const s = (sec % 60).toString().padStart(2, "0");
+      return `${m}:${s}`;
+    }
+    function phaseSeconds(mode) {
+      return mode === "work" ? WORK_MIN * 60
+           : mode === "long" ? LONG_BREAK_MIN * 60
+           : SHORT_BREAK_MIN * 60;
+    }
+    function modeName(mode) {
+      return mode === "work" ? "Focus" : mode === "long" ? "Long Break" : "Short Break";
+    }
+    function renderPomo() {
+      pomoTimeEl.textContent = fmtTime(pomo.secondsLeft);
+      pomoModeEl.textContent = modeName(pomo.mode);
+      pomoCyclesEl.textContent = pomo.completedWork;
+      pomoStartBtn.textContent = pomo.running ? "Pause" : "Start";
+      pomoCard.classList.toggle("pomo-work", pomo.mode === "work");
+      pomoCard.classList.toggle("pomo-break", pomo.mode !== "work");
+      document.title = pomo.running
+        ? `${fmtTime(pomo.secondsLeft)} · ${modeName(pomo.mode)} | Productivity`
+        : "My Productivity Dashboard";
+    }
+    function tick() {
+      pomo.secondsLeft--;
+      if (pomo.secondsLeft <= 0) {
+        stopTimer();
+        onPhaseComplete();
+      }
+      renderPomo();
+    }
+    function startTimer() {
+      if (pomo.running) { pauseTimer(); return; }
+      ensureAudio();
+      ensureNotificationPermission();
+      pomo.running = true;
+      pomo.timer = setInterval(tick, 1000);
+      renderPomo();
+    }
+    function pauseTimer() {
+      pomo.running = false;
+      clearInterval(pomo.timer);
+      pomo.timer = null;
+      renderPomo();
+    }
+    function stopTimer() {
+      pomo.running = false;
+      clearInterval(pomo.timer);
+      pomo.timer = null;
+    }
+    function resetTimer() {
+      stopTimer();
+      pomo.mode = "work";
+      pomo.secondsLeft = phaseSeconds("work");
+      renderPomo();
+    }
+    function onPhaseComplete() {
+      beep();
+      if (pomo.mode === "work") {
+        pomo.completedWork++;
+        const isLong = pomo.completedWork % LONG_EVERY === 0;
+        pomo.mode = isLong ? "long" : "short";
+        notify(
+          "🍅 Focus session complete!",
+          isLong
+            ? `Great work! Enjoy a ${LONG_BREAK_MIN}-min long break with a cat fact 🐾`
+            : `Time for a ${SHORT_BREAK_MIN}-min break. Here's a cat fact 🐾`
+        );
+        fetchCatFact(true);
+      } else {
+        pomo.mode = "work";
+        notify("💪 Break's over!", "Back to focus — starting a 25-min work session.");
+      }
+      pomo.secondsLeft = phaseSeconds(pomo.mode);
+      renderPomo();
+      startTimer(); // auto-advance into the next phase
+    }
+    pomoStartBtn.addEventListener("click", startTimer);
+    pomoResetBtn.addEventListener("click", resetTimer);
+    renderPomo();
+
+    // ---- Desktop notifications ----
+    function ensureNotificationPermission() {
+      if (!("Notification" in window)) return;
+      if (Notification.permission === "default") Notification.requestPermission();
+    }
+    function notify(title, body) {
+      if (!("Notification" in window) || Notification.permission !== "granted") return;
+      try { new Notification(title, { body }); }
+      catch (e) { /* ignore */ }
+    }
+
+    // ---- Subtle beep on phase change (Web Audio) ----
+    let audioCtx = null;
+    function ensureAudio() {
+      try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+      } catch (e) { /* ignore */ }
+    }
+    function beep() {
+      try {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = "sine";
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.6);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.6);
+      } catch (e) { /* ignore */ }
+    }
+
+    /* =========================================================
+       6. Cat Facts (catfact.ninja — free, no API key)
+       Auto-refreshed when a break starts; also on demand for a
+       quick fun break between work sessions.
+    ========================================================= */
+    const catFactEl = document.getElementById('catFact');
+    const catFactCard = document.getElementById('catFactCard');
+    async function fetchCatFact(highlight = false) {
+      catFactEl.textContent = "Fetching a fresh cat fact... 🐱";
+      try {
+        const res = await fetch("https://catfact.ninja/fact");
+        if (!res.ok) throw new Error("Cat fact request failed");
+        const data = await res.json();
+        catFactEl.textContent = data.fact;
+      } catch (e) {
+        catFactEl.textContent = "Couldn't load a cat fact right now. Try again later! 😿";
+      }
+      if (highlight) {
+        catFactCard.classList.remove("glow");
+        void catFactCard.offsetWidth; // restart animation
+        catFactCard.classList.add("glow");
+      }
+    }
+    document.getElementById('newCatFactBtn').addEventListener("click", () => fetchCatFact(true));
+    fetchCatFact();
+
+    renderTasks();
+  </script>
+</body>
+</html>
